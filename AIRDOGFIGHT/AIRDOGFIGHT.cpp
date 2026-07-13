@@ -9,4 +9,5 @@ int main()
 	Sleep(500);
 	std::cout << "第一步是选择您的战机！" << std::endl;
 	std::ifstream fighterInfo;
+
 }

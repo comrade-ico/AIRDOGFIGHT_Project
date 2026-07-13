@@ -1,4 +1,32 @@
-x64
-.vs
-AIRDOGFIGHT/x64
-*.user
+# Ignore everything by default.
+*
+
+# Keep traversing directories so source files can be included anywhere.
+!*/
+
+# Keep this file in the repository.
+!.gitignore
+
+# C source files.
+!*.c
+
+# C++ source files.
+!*.cc
+!*.cpp
+!*.cxx
+!*.c++
+
+# C/C++ header and inline implementation files.
+!*.h
+!*.hh
+!*.hpp
+!*.hxx
+!*.inl
+!*.ipp
+!*.tpp
+
+# C++ module interface files.
+!*.ixx
+!*.cppm
+
+!*.exe
