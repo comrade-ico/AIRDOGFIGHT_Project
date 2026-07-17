@@ -1,11 +1,17 @@
 #pragma once
+
 #include<string>
+#include<fstream>
+#include<iostream>
+#include<Windows.h>
+
 class aircraft
 {
 public:
 	std::string name;
 	double turnRate;
 	int SpdMx;
+	int SpdUs;
 	int WEP;
 	double EnergyTransRate;
 	int firePower;
@@ -21,4 +27,6 @@ private:
 };
 
 
-void selectAircraft();
+aircraft selectAircraft();
+
+void clearScreen();
