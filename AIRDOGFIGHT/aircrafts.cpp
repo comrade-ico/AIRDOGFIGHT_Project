@@ -10,6 +10,12 @@
 
 #include"aircrafts.h"
 
+
+int attackWinrate_list1[8] = { 7,6,5,3,4,5,6,7 };
+int attackWinrate_list2[8] = { 7,5,4,3,3,4,5,6 };
+int attackWinrate_list3[8] = { 7,5,3,2,4,5,6,7 };
+
+
 aircraft selectAircraft()
 {
 	int tNum;
@@ -26,19 +32,27 @@ aircraft selectAircraft()
 			{
 				std::cout << "ID:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "战机名称:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "产能:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "回转能力值:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "最大速度:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "有效速度:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "存能值:" << line << std::endl;
 				getline(Fighters, line);
+				Sleep(40);
 				std::cout << "火力值:" << line << std::endl << std::endl;
+				Sleep(40);
 			}
 		}
 		else
@@ -50,7 +64,7 @@ aircraft selectAircraft()
 }
 
 aircraft::aircraft(int id)
-	:Spd(0), Alt(0), name(""), WEP(0), turnRate(0), SpdMx(0),SpdUs(0),EnergyTransRate(0), firePower(0)
+	:Spd(0), Alt(0), name(""), WEP(0), turnRate(0), SpdMx(0),SpdUs(0),energyTransRate(0), firePower(0)
 {
 	std::ifstream Fighters;
 	std::string line;
@@ -79,7 +93,7 @@ aircraft::aircraft(int id)
 				getline(Fighters, line);
 				SpdUs = stoi(line);
 				getline(Fighters, line);
-				EnergyTransRate = stod(line);
+				energyTransRate = stod(line);
 				getline(Fighters, line);
 				firePower = stoi(line);
 				Fighters.close();
@@ -121,7 +135,7 @@ aircraft::aircraft(int id)
 		turnRate = temp.turnRate;
 		SpdMx = temp.SpdMx;
 		SpdUs = temp.SpdUs;
-		EnergyTransRate = temp.EnergyTransRate;
+		energyTransRate = temp.energyTransRate;
 		firePower = temp.firePower;
 		return;
 	}
@@ -140,9 +154,28 @@ void aircraft::statUpdate(int Alt, int Spd)
 	return;
 }
 
+void aircraft::operator=(aircraft x)
+{
+	this->name = x.name;
+	this->energyTransRate = x.energyTransRate;
+	this->firePower = x.firePower;
+	this->SpdMx = x.SpdMx;
+	this->SpdUs = x.SpdUs;
+	this->turnRate = x.turnRate;
+	this->WEP = x.WEP;
+	return;
+}
 
 
 void clearScreen()
 {
 	std::cout << "\033[2J\033[H";
+}
+
+
+int randInt(int min, int max)
+{
+	static 	std::mt19937 gen(std::random_device{}());
+	std::uniform_int_distribution<int> dist(min,max);
+	return dist(gen);
 }

@@ -1,9 +1,11 @@
 ﻿#include <cstdlib>
 #include"aircrafts.h"
+#include"game.h"
 //卡牌！？
 
 int main()
 {
+
 	std::string inpMem;
 	std::cout << "嘿！欢迎打开AIRDOGFIGHT——一款空战卡牌游戏！" << std::endl;
 	Sleep(500);
@@ -22,13 +24,7 @@ int main()
 		std::cin >> inpMem;
 		clearScreen();
 	}
-
-	while (1)
-	{
-		
-	}
-
-
+	start();
 
 	return 0;
 }
