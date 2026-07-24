@@ -20,7 +20,8 @@
 
 #include"aircrafts.h"
 
-int cardQueue[4];
+int cardQueue0[4];
+int cardQueue1[4];
 int attackWinrate_list1[8] = { 7,6,5,3,4,5,6,7 };
 int attackWinrate_list2[8] = { 7,5,4,3,3,4,5,6 };
 int attackWinrate_list3[8] = { 7,5,3,2,4,5,6,7 };
@@ -250,7 +251,7 @@ void card::showInfo(aircraft& player)
 		Sleep(40);
 		if (player.Spd > player.SpdUs)
 		{
-			std::cout << player.Spd - player.SpdUs << "    ";
+			std::cout << player.SpdUs - player.Spd << "    ";
 		}
 		else std::cout << static_cast<int>(std::floor(this->SpdGet))<<"    ";
 		std::cout << "高度变化：";
@@ -295,7 +296,7 @@ void card::cardUse(aircraft& player, int& angle, int& distance, int playerID)
 	else if (this->type == "pos")
 	{
 		player.Alt += static_cast<int>(std::floor((player.Spd > player.SpdUs) ? player.SpdUs - player.Spd + player.WEP * 0.5 + this->AltGet : player.WEP + this->AltGet));
-		player.Spd += static_cast<int>(std::floor((player.Spd > player.SpdUs) ? player.Spd - player.SpdUs : this->SpdGet));
+		player.Spd += static_cast<int>(std::floor((player.Spd > player.SpdUs) ? player.SpdUs - player.Spd : this->SpdGet));
 	}
 	else
 	{

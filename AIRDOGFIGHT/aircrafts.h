@@ -64,5 +64,6 @@ extern int attackWinrate_list1[8];
 extern int attackWinrate_list2[8];
 extern int attackWinrate_list3[8];
 
-extern int cardQueue[4];
+extern int cardQueue0[4];
+extern int cardQueue1[4];
 

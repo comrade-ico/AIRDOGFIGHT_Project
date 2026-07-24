@@ -1,4 +1,4 @@
-#define RELANGLE min(angle,18-angle) != 0? static_cast<int>(std::floor(max(angle,18-angle)*2/min(angle,18-angle))) : 18
+#define RELANGLE (min(angle,18-angle) != 0 ? static_cast<int>(std::floor(max(angle,18-angle)*2/min(angle,18-angle))) : 18)
 #define DISTANCE (distance + 0.5 * static_cast<int>(std::floor(abs(player[0].Alt - player[1].Alt))))
 #include "game.h"
 
@@ -31,29 +31,79 @@ void start()
 		clearScreen();
 		while (1)
 		{
+			if (mainGame.player[0].Alt <= 0)
+			{
+				std::cout << "游戏结束！" << std::endl;
+				Sleep(400);
+				std::cout << "玩家1高度不足坠机" << std::endl;
+				Sleep(250);
+				std::cout << "玩家2获胜！" << std::endl;
+				Sleep(1000);
+				break;
+			}
+
+			if (mainGame.player[1].Alt <= 0)
+			{
+				std::cout << "游戏结束！" << std::endl;
+				Sleep(400);
+				std::cout << "玩家2高度不足坠机" << std::endl;
+				Sleep(250);
+				std::cout << "玩家1获胜！" << std::endl;
+				Sleep(1000);
+				break;
+			}
+
 			turn = (mainGame.angle > 9) ? true : false;
 			for (int i = 0; i < 2; i++)
 			{
 				mainGame.showStats();
-				std::cout << "卡牌抽取：" << std::endl;
-				mainGame.genKardQueue(static_cast<int>(turn), cardQueue);
-				std::cout << "玩家" << static_cast<int>(turn) + 1 << "-输入数字1-4以选择使用的卡牌：";
-				std::cin >> ((turn) ? choice1 : choice0);
+				if (!mainGame.stall[i])
+				{
+					std::cout << "卡牌抽取：" << std::endl;
+					(turn)? mainGame.genKardQueue(static_cast<int>(turn), cardQueue1) : mainGame.genKardQueue(static_cast<int>(turn), cardQueue0);
+					std::cout << "玩家" << static_cast<int>(turn) + 1 << "-输入数字1-4以选择使用的卡牌：";
+					std::cin >> ((turn) ? choice1 : choice0);
 
-				std::cout << "玩家" << static_cast<int>(turn) + 1 << "-已确认卡牌选项" <<std::endl;
-				Sleep(1000);
+					std::cout << "玩家" << static_cast<int>(turn) + 1 << "-已确认卡牌选项" << std::endl;
+					Sleep(1000);
+				}
+				else
+				{
+					std::cout << "玩家" << static_cast<int>(turn) + 1 << "处于失速状态——该回合无法进行任何操作" << std::endl;
+				}
+				
 				turn = not turn;
 
 				clearScreen();
 			}
-			mainGame.turnUseCard(choice0, 0);
-			mainGame.turnUseCard(choice1, 1);
+			if (!mainGame.stall[0])
+			{
+				mainGame.turnUseCard(choice0, cardQueue0, 0);
+			}
+			else
+			{
+				mainGame.player[0].Alt -= (3 - mainGame.player[0].WEP);
+				mainGame.player[0].Spd = 1;
+				mainGame.distance += (mainGame.angle > 9) ? -5 : (mainGame.angle != 9) ? 2 : 0;
+				std::cout << "玩家1正在改出失速！" << std::endl;
+			}
+			if (!mainGame.stall[1])
+			{
+				mainGame.turnUseCard(choice1, cardQueue1, 1);
+			}
+			else
+			{
+				mainGame.player[1].Alt -= (3 - mainGame.player[1].WEP);
+				mainGame.player[1].Spd = 1;
+				mainGame.distance += (mainGame.angle < 9) ? -5 : (mainGame.angle != 9) ? 2 : 0;
+				std::cout << "玩家2正在改出失速！" << std::endl;
+			}
 			Sleep(200);
 			clearScreen();
 			mainGame.showStats();
 			if (mainGame.enableAttack())
 			{
-				std::cout << "玩家" << ((mainGame.angle > 9) ? "1" : "2") << "有攻击可能,是否尝试？（Y/N）" << std::endl;
+				std::cout << "玩家" << ((mainGame.angle > 9) ? "1" : "2") << "有攻击可能,是否尝试？(消耗一些角度、降低1间距)（Y/N）" << std::endl;
 				std::cin >> choice0;
 				if (choice0 == "Y" || choice0 == "y")
 				{
@@ -75,9 +125,13 @@ void start()
 				{
 					std::cout << "对头开始！" << std::endl;
 				}
+				//---------
+				std::cout << "对头功能制作中，敬请期待" << std::endl;
+				mainGame.distance -= 4;
+				//---------
 			}
 			clearScreen();
-			//mainGame.endTurn();
+			mainGame.endTurn();
 		}
 
 	}
@@ -85,7 +139,7 @@ void start()
 
 
 game::game()
-	:AIplayer(0),distance(8),angle(9),cardCount(0)
+	:AIplayer(0), distance(8), angle(9), cardCount(0), stall(false,false)
 {
 	std::ifstream cardFile("cards.txt", std::ios::in);
 	std::string fetchMem;
@@ -202,6 +256,8 @@ bool game::attack(int fighter, bool headon = false)
 			return (attacking(player[fighter].firePower, DISTANCE, dice, attackWinrate_list3));
 		}
 	}
+	//进攻不论成功与否都会损失角度
+	angle += static_cast<int>(std::floor((9 - angle) * 0.5));
 }
 
 
@@ -256,6 +312,7 @@ bool attacking(int firepower, int distance, int dice, int* winrate)
 		Sleep(500);
 		return false;
 	}
+	distance -= 1;
 }
 
 void game::genKardQueue(int fighter, int(&outQueue)[4])
@@ -305,7 +362,7 @@ void game::useCard(int choise, int(&outQueue)[4], int fighter)
 	return;
 }
 
-void game::turnUseCard(std::string choice, int id)
+void game::turnUseCard(std::string choice,int(&cardQueue)[4], int id)
 {
 	//注意此处有差1现象
 	if (choice == "1")
@@ -328,10 +385,64 @@ void game::turnUseCard(std::string choice, int id)
 
 bool game::enableAttack()
 {
-	return (this->distance < 8 && RELANGLE >= 3);
+	std::cout << "判断词语：" << RELANGLE << std::endl;
+	return (this->distance < 8 && this->distance > 1 && RELANGLE >= 3);
 }
 
 bool game::enableHeadon()
 {
-	return (this->distance < 8 && RELANGLE < 3);
+	return (this->distance < 8 && this->distance > 1 && RELANGLE < 3);
+}
+
+void game::endTurn()
+{
+	std::cout << "\n回合结束，新的综合状况：" << std::endl;
+	Sleep(200);
+	if (distance < 0)
+	{
+		std::cout << "发生超前！" << std::endl;
+		angle = 18 - angle;
+		distance *= -1;
+	}
+	stall[0] = false; stall[1] = false;
+	Sleep(500);
+
+	if (this->player[0].Spd <= 0)
+	{
+		std::cout << "玩家1失速！下一回合将无法行动！" << std::endl;
+		stall[0] = true;
+	}
+
+	if (this->player[1].Spd <= 0)
+	{
+		std::cout << "玩家2失速！下一回合将无法行动！" << std::endl;
+		stall[1] = true;
+	}
+
+	if (this->player[0].Spd > this->player[0].SpdMx)
+	{
+		this->player[0].Spd = this->player[0].SpdMx;
+		std::cout << "玩家1到达极速" << std::endl;
+		Sleep(200);
+	}
+	if (this->player[1].Spd > this->player[1].SpdMx)
+	{
+		this->player[1].Spd = this->player[1].SpdMx;
+		std::cout << "玩家1到达极速" << std::endl;
+		Sleep(200);
+	}
+
+	if (angle > 11)
+	{
+		std::cout << "回合结束间距变化：" << this->player[1].Spd - this->player[0].Spd << std::endl;
+		distance += this->player[1].Spd - this->player[0].Spd;
+	}
+	else if (angle < 7)
+	{
+		std::cout << "回合结束间距变化：" << this->player[0].Spd - this->player[1].Spd << std::endl;
+		distance += this->player[0].Spd - this->player[1].Spd;
+	}
+	else std::cout << "回合结束间距变化：0" << std::endl;
+
+	Sleep(1500);
 }
