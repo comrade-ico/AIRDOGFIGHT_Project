@@ -132,14 +132,14 @@ aircraft::aircraft(int id)
 	}
 	if (success)
 	{
-		std::cout << "读取战斗机数据成功！" << std::endl;
-		Sleep(500);
+		//std::cout << "读取战斗机数据成功！" << std::endl;
+		//Sleep(200);
 		return;
 	}
 	else
 	{
 		std::cout << "对应战机未能找到，已自动选择默认飞机" << std::endl;
-		Sleep(500);
+		Sleep(200);
 		aircraft temp(0);
 		name = temp.name;
 		WEP = temp.WEP;

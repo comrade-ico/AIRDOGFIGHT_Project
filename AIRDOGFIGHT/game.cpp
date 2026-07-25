@@ -58,7 +58,7 @@ void start()
 			for (int i = 0; i < 2; i++)
 			{
 				mainGame.showStats();
-				if (!mainGame.stall[i])
+				if (!mainGame.stall[turn])
 				{
 					std::cout << "卡牌抽取：" << std::endl;
 					(turn)? mainGame.genKardQueue(static_cast<int>(turn), cardQueue1) : mainGame.genKardQueue(static_cast<int>(turn), cardQueue0);
@@ -336,7 +336,7 @@ bool attacking(int firepower, int distance, int dice, int* winrate)
 		int altDice = randInt(1, 6);
 		std::cout << "攻击！";
 		Sleep(200);
-		if (altDice >= firepower)
+		if (altDice <= firepower)
 		{
 			std::cout << "命中目标！" << std::endl;
 			Sleep(200);
