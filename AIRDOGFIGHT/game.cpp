@@ -7,6 +7,7 @@ void start()
 	game mainGame;
 	mainGame.ModeSelection();
 	bool turn = false;
+	int mem = 0;
 	std::string choice0;
 	std::string choice1;
 	if (mainGame.AIplayer == 1)
@@ -100,7 +101,6 @@ void start()
 			}
 			Sleep(200);
 			clearScreen();
-			mainGame.showStats();
 			if (mainGame.enableAttack())
 			{
 				std::cout << "玩家" << ((mainGame.angle > 9) ? "1" : "2") << "有攻击可能,是否尝试？(消耗一些角度、降低1间距)（Y/N）" << std::endl;
@@ -124,12 +124,55 @@ void start()
 				if (choice1 == "Y" || choice1 == "y")
 				{
 					std::cout << "对头开始！" << std::endl;
+					Sleep(200);
+
+					for (int i = 0; i < 2; i++)
+					{
+						std::cout << "玩家" << i + 1 << "-做出对头选择(0-规避-不会被击中，但是损失角度；1-攻击-无任何损失，火力越强越优势)：" << std::endl;
+						std::cin >> ((i == 0)? choice0 : choice1);
+						Sleep(150);
+					}
+					if (choice0 == "1" && choice1 == "1")
+					{
+						std::cout << "骑士对头，开始！" << std::endl;
+						Sleep(250);
+						mainGame.distance -= 2;
+						mem = mainGame.headon();
+						if(mem == 0)
+						{
+							std::cout << "双方未互相命中！" << std::endl;
+							Sleep(500);
+						}
+						else if (mem == 1)
+						{
+							std::cout << "玩家1击落玩家2！玩家1获胜！" << std::endl;
+							Sleep(1000);
+							break;
+						}
+						else
+						{
+							std::cout << "玩家2击落玩家1！玩家2获胜！" << std::endl;
+							Sleep(1000);
+							break;
+						}
+
+					}
+					else if (choice0 == "1")
+					{
+						mainGame.distance -= 2;
+						mainGame.angle += 2;
+					}
+					else if (choice1 == "1")
+					{
+						mainGame.distance -= 2;
+						mainGame.angle -= 2;
+					}
+					else mainGame.distance -= 4;
+
 				}
-				//---------
-				std::cout << "对头功能制作中，敬请期待" << std::endl;
-				mainGame.distance -= 4;
-				//---------
 			}
+			choice1 = "";
+			choice0 = "";
 			clearScreen();
 			mainGame.endTurn();
 		}
@@ -238,6 +281,7 @@ bool game::attack(int fighter, bool headon = false)
 	}
 	else
 	{
+		angle += static_cast<int>(std::floor((9 - angle) * 0.5));
 		switch (RELANGLE)
 		{
 		case 2:
@@ -257,7 +301,6 @@ bool game::attack(int fighter, bool headon = false)
 		}
 	}
 	//进攻不论成功与否都会损失角度
-	angle += static_cast<int>(std::floor((9 - angle) * 0.5));
 }
 
 
@@ -385,7 +428,7 @@ void game::turnUseCard(std::string choice,int(&cardQueue)[4], int id)
 
 bool game::enableAttack()
 {
-	std::cout << "判断词语：" << RELANGLE << std::endl;
+	//std::cout << "判断词语：" << RELANGLE << std::endl;
 	return (this->distance < 8 && this->distance > 1 && RELANGLE >= 3);
 }
 
@@ -394,29 +437,55 @@ bool game::enableHeadon()
 	return (this->distance < 8 && this->distance > 1 && RELANGLE < 3);
 }
 
+int game::headon()
+{
+	int dice1 = randInt(1, 6);
+	int dice2 = randInt(1, 6);
+	if (this->player[0].firePower > this->player[1].firePower)
+	{
+		if (dice1 > this->player[0].firePower)
+		{
+			return 1;
+		}
+		else if (dice2 > this->player[1].firePower)
+		{
+			return 2;
+		}
+		else return 0;
+	}
+	else
+	{
+		if (dice2 > this->player[1].firePower)
+		{
+			return 2;
+		}
+		else if (dice1 > this->player[0].firePower)
+		{
+			return 1;
+		}
+		else return 0;
+	}
+}
+
+
 void game::endTurn()
 {
 	std::cout << "\n回合结束，新的综合状况：" << std::endl;
 	Sleep(200);
-	if (distance < 0)
-	{
-		std::cout << "发生超前！" << std::endl;
-		angle = 18 - angle;
-		distance *= -1;
-	}
-	stall[0] = false; stall[1] = false;
-	Sleep(500);
 
 	if (this->player[0].Spd <= 0)
 	{
 		std::cout << "玩家1失速！下一回合将无法行动！" << std::endl;
 		stall[0] = true;
+		Sleep(300);
 	}
+
 
 	if (this->player[1].Spd <= 0)
 	{
 		std::cout << "玩家2失速！下一回合将无法行动！" << std::endl;
 		stall[1] = true;
+		Sleep(300);
 	}
 
 	if (this->player[0].Spd > this->player[0].SpdMx)
@@ -443,6 +512,15 @@ void game::endTurn()
 		distance += this->player[0].Spd - this->player[1].Spd;
 	}
 	else std::cout << "回合结束间距变化：0" << std::endl;
+	Sleep(500);
+
+	if (distance < 0)
+	{
+		std::cout << "发生超前！" << std::endl;
+		angle = 18 - angle;
+		distance *= -1;
+	}
+	stall[0] = false; stall[1] = false;
 
 	Sleep(1500);
 }

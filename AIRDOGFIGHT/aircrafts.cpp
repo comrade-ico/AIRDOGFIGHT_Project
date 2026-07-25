@@ -32,7 +32,7 @@ aircraft selectAircraft()
 	int tNum;
 	while (1)
 	{
-		std::cout << "请选择战机编号（现版本编号范围：0~1，输入-1拉出战斗机列表）：";
+		std::cout << "请选择战机编号（现版本编号范围：0~2，输入-1拉出战斗机列表）：";
 		std::cin >> tNum;
 		if (tNum == -1)
 		{

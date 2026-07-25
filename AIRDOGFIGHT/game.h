@@ -15,6 +15,7 @@ public:
 	bool enableAttack();
 	bool enableHeadon();
 	void endTurn();
+	int headon();
 
 	bool AIplayer;
 	aircraft player[2];
