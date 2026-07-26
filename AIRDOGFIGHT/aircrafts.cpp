@@ -75,7 +75,7 @@ aircraft selectAircraft()
 }
 
 aircraft::aircraft(int id)
-	:Spd(0), Alt(0), name(""), WEP(0), turnRate(0), SpdMx(0),SpdUs(0),energyTransRate(0), firePower(0), stall(false)
+	:Spd(0), Alt(0), name(""), WEP(0), turnRate(0), SpdMx(0),SpdUs(0),energyTransRate(0), firePower(0)
 {
 	std::ifstream Fighters;
 	std::string line;

@@ -22,8 +22,6 @@ public:
 	int Alt;
 	int Spd;
 
-	bool stall;
-
 	aircraft(int id = 0);
 	void operator=(aircraft x);
 

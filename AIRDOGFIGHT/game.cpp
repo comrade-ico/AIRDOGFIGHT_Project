@@ -275,30 +275,25 @@ void game::fighterSelection()
 bool game::attack(int fighter, bool headon = false)
 {
 	int dice = randInt(1, 6);
-	if (headon)
+	int attackDistance = static_cast<int>(DISTANCE);
+	angle += static_cast<int>(std::floor((9 - angle) * 0.5));
+	distance -= 1;
+	switch (RELANGLE)
 	{
-		return(dice >= player[fighter].firePower);
-	}
-	else
-	{
-		angle += static_cast<int>(std::floor((9 - angle) * 0.5));
-		switch (RELANGLE)
-		{
 		case 2:
 			return false;
 			break;
 		case 3:
-			return (attacking(player[fighter].firePower, DISTANCE, dice, attackWinrate_list1));
+			return (attacking(player[fighter].firePower, attackDistance, dice, attackWinrate_list1));
 			break;
 		case 4:
-			return (attacking(player[fighter].firePower, DISTANCE, dice, attackWinrate_list2));
+			return (attacking(player[fighter].firePower, attackDistance, dice, attackWinrate_list2));
 			break;
 		case 5:
-			return (attacking(player[fighter].firePower, DISTANCE, dice, attackWinrate_list2));
+			return (attacking(player[fighter].firePower, attackDistance, dice, attackWinrate_list2));
 			break;
 		default:
-			return (attacking(player[fighter].firePower, DISTANCE, dice, attackWinrate_list3));
-		}
+			return (attacking(player[fighter].firePower, attackDistance, dice, attackWinrate_list3));
 	}
 	//进攻不论成功与否都会损失角度
 }
@@ -355,7 +350,6 @@ bool attacking(int firepower, int distance, int dice, int* winrate)
 		Sleep(500);
 		return false;
 	}
-	distance -= 1;
 }
 
 void game::genKardQueue(int fighter, int(&outQueue)[4])
@@ -407,34 +401,42 @@ void game::useCard(int choise, int(&outQueue)[4], int fighter)
 
 void game::turnUseCard(std::string choice,int(&cardQueue)[4], int id)
 {
-	//注意此处有差1现象
-	if (choice == "1")
+	while (true)
 	{
-		this->useCard(0, cardQueue, static_cast<int>(id));
-	}
-	else if (choice == "2")
-	{
-		this->useCard(1, cardQueue, static_cast<int>(id));
-	}
-	else if (choice == "3")
-	{
-		this->useCard(2, cardQueue, static_cast<int>(id));
-	}
-	else
-	{
-		this->useCard(3, cardQueue, static_cast<int>(id));
+		if (choice == "1")
+		{
+			this->useCard(0, cardQueue, id);
+			return;
+		}
+		else if (choice == "2")
+		{
+			this->useCard(1, cardQueue, id);
+			return;
+		}
+		else if (choice == "3")
+		{
+			this->useCard(2, cardQueue, id);
+			return;
+		}
+		else if (choice == "4")
+		{
+			this->useCard(3, cardQueue, id);
+			return;
+		}
+
+		std::cout << "输入错误，请重新输入数字1-4以选择使用的卡牌：" << std::endl;
+		std::cin >> choice;
 	}
 }
 
 bool game::enableAttack()
 {
-	//std::cout << "判断词语：" << RELANGLE << std::endl;
-	return (this->distance < 8 && this->distance > 1 && RELANGLE >= 3);
+	return (DISTANCE < 8 && this->distance > 1 && RELANGLE >= 3);
 }
 
 bool game::enableHeadon()
 {
-	return (this->distance < 8 && this->distance > 1 && RELANGLE < 3);
+	return (DISTANCE < 8 && this->distance > 1 && RELANGLE < 3);
 }
 
 int game::headon()
@@ -443,11 +445,11 @@ int game::headon()
 	int dice2 = randInt(1, 6);
 	if (this->player[0].firePower > this->player[1].firePower)
 	{
-		if (dice1 > this->player[0].firePower)
+		if (dice1 <= this->player[0].firePower)
 		{
 			return 1;
 		}
-		else if (dice2 > this->player[1].firePower)
+		else if (dice2 <= this->player[1].firePower)
 		{
 			return 2;
 		}
@@ -455,11 +457,11 @@ int game::headon()
 	}
 	else
 	{
-		if (dice2 > this->player[1].firePower)
+		if (dice2 <= this->player[1].firePower)
 		{
 			return 2;
 		}
-		else if (dice1 > this->player[0].firePower)
+		else if (dice1 <= this->player[0].firePower)
 		{
 			return 1;
 		}
@@ -470,6 +472,7 @@ int game::headon()
 
 void game::endTurn()
 {
+	stall[0] = false; stall[1] = false;
 	std::cout << "\n回合结束，新的综合状况：" << std::endl;
 	Sleep(200);
 
@@ -497,7 +500,7 @@ void game::endTurn()
 	if (this->player[1].Spd > this->player[1].SpdMx)
 	{
 		this->player[1].Spd = this->player[1].SpdMx;
-		std::cout << "玩家1到达极速" << std::endl;
+		std::cout << "玩家2到达极速" << std::endl;
 		Sleep(200);
 	}
 
@@ -520,7 +523,6 @@ void game::endTurn()
 		angle = 18 - angle;
 		distance *= -1;
 	}
-	stall[0] = false; stall[1] = false;
 
 	Sleep(1500);
 }
