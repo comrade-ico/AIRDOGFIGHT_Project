@@ -1,0 +1,3 @@
+D:\杂项\C++Programme\AIRDOGFIGHT_C\x64\Debug\cards.txt
+D:\杂项\C++Programme\AIRDOGFIGHT_C\x64\Debug\Fighters.txt
+D:\杂项\C++Programme\AIRDOGFIGHT_C\x64\Debug\Rules_CH.txt

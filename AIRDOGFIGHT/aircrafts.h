@@ -7,6 +7,7 @@
 #include<random>
 #include<cmath>
 #include<vector>
+#include<filesystem>
 
 class aircraft
 {
@@ -23,7 +24,6 @@ public:
 	int Spd;
 
 	aircraft(int id = 0);
-	void operator=(aircraft x);
 
 	void statUpdate(int Alt, int Spd);
 
@@ -37,7 +37,6 @@ public:
 	void cardUse(aircraft& player, int& angle, int& distance, int playerID);
 	void showInfo(aircraft& player);
 
-	void operator=(card& inp);
 	std::string name;
 	std::string description;
 
@@ -58,10 +57,11 @@ void clearScreen();
 
 int randInt(int min, int max);
 
+std::string readToken();
+
+std::filesystem::path dataFilePath(const std::filesystem::path& fileName);
+
 extern int attackWinrate_list1[8];
 extern int attackWinrate_list2[8];
 extern int attackWinrate_list3[8];
-
-extern int cardQueue0[4];
-extern int cardQueue1[4];
 

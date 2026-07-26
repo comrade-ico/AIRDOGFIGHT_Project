@@ -16,12 +16,15 @@ public:
 	bool enableHeadon();
 	void endTurn();
 	int headon();
+	int relativeAngleRatio() const;
+	double effectiveDistance() const;
 
 	bool AIplayer;
 	aircraft player[2];
 	int distance;
 	int angle;
 	bool stall[2];
+	int cardQueues[2][4];
 
 private:
 	std::vector<card> cards;

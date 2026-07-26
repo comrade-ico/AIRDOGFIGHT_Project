@@ -1,6 +1,5 @@
-#define RELANGLE (min(angle,18-angle) != 0 ? static_cast<int>(std::floor(max(angle,18-angle)*2/min(angle,18-angle))) : 18)
-#define DISTANCE (distance + 0.5 * static_cast<int>(std::floor(abs(player[0].Alt - player[1].Alt))))
 #include "game.h"
+#include <stdexcept>
 
 void start()
 {
@@ -61,9 +60,9 @@ void start()
 				if (!mainGame.stall[turn])
 				{
 					std::cout << "卡牌抽取：" << std::endl;
-					(turn)? mainGame.genKardQueue(static_cast<int>(turn), cardQueue1) : mainGame.genKardQueue(static_cast<int>(turn), cardQueue0);
+					mainGame.genKardQueue(static_cast<int>(turn), mainGame.cardQueues[turn]);
 					std::cout << "玩家" << static_cast<int>(turn) + 1 << "-输入数字1-4以选择使用的卡牌：";
-					std::cin >> ((turn) ? choice1 : choice0);
+					((turn) ? choice1 : choice0) = readToken();
 
 					std::cout << "玩家" << static_cast<int>(turn) + 1 << "-已确认卡牌选项" << std::endl;
 					Sleep(1000);
@@ -79,7 +78,7 @@ void start()
 			}
 			if (!mainGame.stall[0])
 			{
-				mainGame.turnUseCard(choice0, cardQueue0, 0);
+				mainGame.turnUseCard(choice0, mainGame.cardQueues[0], 0);
 			}
 			else
 			{
@@ -90,7 +89,7 @@ void start()
 			}
 			if (!mainGame.stall[1])
 			{
-				mainGame.turnUseCard(choice1, cardQueue1, 1);
+				mainGame.turnUseCard(choice1, mainGame.cardQueues[1], 1);
 			}
 			else
 			{
@@ -104,7 +103,7 @@ void start()
 			if (mainGame.enableAttack())
 			{
 				std::cout << "玩家" << ((mainGame.angle > 9) ? "1" : "2") << "有攻击可能,是否尝试？(消耗一些角度、降低1间距)（Y/N）" << std::endl;
-				std::cin >> choice0;
+				choice0 = readToken();
 				if (choice0 == "Y" || choice0 == "y")
 				{
 					if (mainGame.attack((mainGame.angle > 9) ? 0 : 1, false))
@@ -120,7 +119,7 @@ void start()
 			else if (mainGame.enableHeadon())
 			{
 				std::cout << "玩家" << ((mainGame.player[0].Spd > mainGame.player[1].Spd) ? "1" : (mainGame.player[0].Spd == mainGame.player[1].Spd) ? (mainGame.player[0].Alt > mainGame.player[1].Alt) ? "1" : "2" : "2") << "决定是否进入[对头](Y/N):" << std::endl;
-				std::cin >> choice1;
+				choice1 = readToken();
 				if (choice1 == "Y" || choice1 == "y")
 				{
 					std::cout << "对头开始！" << std::endl;
@@ -129,7 +128,7 @@ void start()
 					for (int i = 0; i < 2; i++)
 					{
 						std::cout << "玩家" << i + 1 << "-做出对头选择(0-规避-不会被击中，但是损失角度；1-攻击-无任何损失，火力越强越优势)：" << std::endl;
-						std::cin >> ((i == 0)? choice0 : choice1);
+						((i == 0)? choice0 : choice1) = readToken();
 						Sleep(150);
 					}
 					if (choice0 == "1" && choice1 == "1")
@@ -182,9 +181,9 @@ void start()
 
 
 game::game()
-	:AIplayer(0), distance(8), angle(9), cardCount(0), stall(false,false)
+	:AIplayer(0), distance(8), angle(9), stall{ false, false },
+	cardQueues{ { -1, -1, -1, -1 }, { -1, -1, -1, -1 } }, cardCount(0)
 {
-	std::ifstream cardFile("cards.txt", std::ios::in);
 	std::string fetchMem;
 	int id;
 	std::string name;
@@ -197,40 +196,58 @@ game::game()
 
 	try
 	{
+		std::ifstream cardFile(dataFilePath("cards.txt"), std::ios::in);
 		if (!cardFile.is_open())
 		{
-			throw "missing file!";
+			throw std::runtime_error("无法打开 cards.txt");
 		}
+		auto readValue = [&cardFile](std::string& value)
+		{
+			if (!getline(cardFile, value))
+			{
+				throw std::runtime_error("cards.txt 数据不完整");
+			}
+		};
+
 		while (getline(cardFile, fetchMem))
 		{
 			if (fetchMem != "")
 			{
 				id = std::stoi(fetchMem);
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				name = fetchMem;
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				desc = fetchMem;
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				SGet = std::stoi(fetchMem);
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				AGet = std::stoi(fetchMem);
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				AnTrs = std::stod(fetchMem);;
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				disGet = std::stoi(fetchMem);
-				getline(cardFile, fetchMem);
+				readValue(fetchMem);
 				type = fetchMem;
+				if (type != "lev" && type != "pos" && type != "neg")
+				{
+					throw std::runtime_error("cards.txt 包含未知卡牌类型：" + type);
+				}
 				card tempC(id, name, desc, SGet, AGet, AnTrs, disGet, type);
 				cards.push_back(tempC);
 				cardCount += 1;
 			}
 			else break;
 		}
+
+		if (cardCount < 4)
+		{
+			throw std::runtime_error("cards.txt 至少需要四张卡牌");
+		}
 		
 	}
-	catch (std::string err)
+	catch (const std::exception& err)
 	{
-		std::cerr << "错误：未能读取文件！（请检查文件完整性）" << std::endl;
+		std::cerr << "错误：未能读取卡牌数据（" << err.what() << "）。" << std::endl;
 		Sleep(3000);
 		exit(EXIT_FAILURE);
 	}
@@ -242,7 +259,7 @@ void game::ModeSelection()
 	std::string choise;
 	clearScreen();
 	std::cout << "选项游戏模式：输入0-本地对战（两个玩家）；输入1-机器对战（对战自动敌人）：";
-	std::cin >> choise;
+	choise = readToken();
 	if (choise == "1")
 	{
 		this->AIplayer = 1;
@@ -275,10 +292,10 @@ void game::fighterSelection()
 bool game::attack(int fighter, bool headon = false)
 {
 	int dice = randInt(1, 6);
-	int attackDistance = static_cast<int>(DISTANCE);
+	int attackDistance = static_cast<int>(effectiveDistance());
 	angle += static_cast<int>(std::floor((9 - angle) * 0.5));
 	distance -= 1;
-	switch (RELANGLE)
+	switch (relativeAngleRatio())
 	{
 		case 2:
 			return false;
@@ -425,18 +442,35 @@ void game::turnUseCard(std::string choice,int(&cardQueue)[4], int id)
 		}
 
 		std::cout << "输入错误，请重新输入数字1-4以选择使用的卡牌：" << std::endl;
-		std::cin >> choice;
+		choice = readToken();
 	}
 }
 
 bool game::enableAttack()
 {
-	return (DISTANCE < 8 && this->distance > 1 && RELANGLE >= 3);
+	return (effectiveDistance() < 8 && this->distance > 1 && relativeAngleRatio() >= 3);
 }
 
 bool game::enableHeadon()
 {
-	return (DISTANCE < 8 && this->distance > 1 && RELANGLE < 3);
+	return (effectiveDistance() < 8 && this->distance > 1 && relativeAngleRatio() < 3);
+}
+
+int game::relativeAngleRatio() const
+{
+	const int playerOneAngle = angle;
+	const int playerTwoAngle = 18 - angle;
+	const int smallerAngle = (playerOneAngle < playerTwoAngle) ? playerOneAngle : playerTwoAngle;
+	const int largerAngle = (playerOneAngle > playerTwoAngle) ? playerOneAngle : playerTwoAngle;
+	return (smallerAngle != 0)
+		? static_cast<int>(std::floor(largerAngle * 2.0 / smallerAngle))
+		: 18;
+}
+
+double game::effectiveDistance() const
+{
+	return distance + 0.5 * static_cast<int>(
+		std::floor(std::abs(player[0].Alt - player[1].Alt)));
 }
 
 int game::headon()

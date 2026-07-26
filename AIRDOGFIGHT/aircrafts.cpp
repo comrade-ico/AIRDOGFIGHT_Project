@@ -19,9 +19,8 @@
 //type
 
 #include"aircrafts.h"
+#include<stdexcept>
 
-int cardQueue0[4];
-int cardQueue1[4];
 int attackWinrate_list1[8] = { 7,6,5,3,4,5,6,7 };
 int attackWinrate_list2[8] = { 7,5,4,3,3,4,5,6 };
 int attackWinrate_list3[8] = { 7,5,3,2,4,5,6,7 };
@@ -29,15 +28,35 @@ int attackWinrate_list3[8] = { 7,5,3,2,4,5,6,7 };
 
 aircraft selectAircraft()
 {
-	int tNum;
+	std::string input;
 	while (1)
 	{
 		std::cout << "请选择战机编号（现版本编号范围：0~2，输入-1拉出战斗机列表）：";
-		std::cin >> tNum;
+		input = readToken();
+
+		int tNum;
+		try
+		{
+			size_t parsed = 0;
+			tNum = std::stoi(input, &parsed);
+			if (parsed != input.size())
+			{
+				throw std::invalid_argument("含有非数字字符");
+			}
+		}
+		catch (const std::exception&)
+		{
+			std::cout << "输入错误，请输入-1或0~2之间的整数。" << std::endl;
+			continue;
+		}
+
 		if (tNum == -1)
 		{
-			std::ifstream Fighters;
-			Fighters.open("Fighters.txt", std::ios::in);
+			std::ifstream Fighters(dataFilePath("Fighters.txt"));
+			if (!Fighters.is_open())
+			{
+				throw std::runtime_error("无法打开 Fighters.txt");
+			}
 			std::string line;
 			while (getline(Fighters, line))
 			{
@@ -66,10 +85,14 @@ aircraft selectAircraft()
 				Sleep(40);
 			}
 		}
-		else
+		else if (tNum >= 0 && tNum <= 2)
 		{
 			aircraft fighter(tNum);
 			return fighter;
+		}
+		else
+		{
+			std::cout << "编号超出范围，请输入-1或0~2。" << std::endl;
 		}
 	}
 }
@@ -82,30 +105,41 @@ aircraft::aircraft(int id)
 	bool success = 0;
 	try
 	{
-		Fighters.open("Fighters.txt", std::ios::in);
+		Fighters.open(dataFilePath("Fighters.txt"), std::ios::in);
 		if (!Fighters.is_open())
 		{
-			throw "missing file!";
+			throw std::runtime_error("无法打开 Fighters.txt");
 		}
 
 		while (getline(Fighters, line))
 		{
+			if (line.empty())
+			{
+				continue;
+			}
 			if (stoi(line) == id)
 			{
 				success = 1;
-				getline(Fighters, line);
+				auto readValue = [&Fighters](std::string& value)
+				{
+					if (!getline(Fighters, value))
+					{
+						throw std::runtime_error("Fighters.txt 数据不完整");
+					}
+				};
+				readValue(line);
 				name = line;
-				getline(Fighters, line);
+				readValue(line);
 				WEP = stoi(line);
-				getline(Fighters, line);
+				readValue(line);
 				turnRate = stod(line);
-				getline(Fighters, line);
+				readValue(line);
 				SpdMx = stoi(line);
-				getline(Fighters, line);
+				readValue(line);
 				SpdUs = stoi(line);
-				getline(Fighters, line);
+				readValue(line);
 				energyTransRate = stod(line);
-				getline(Fighters, line);
+				readValue(line);
 				firePower = stoi(line);
 				Fighters.close();
 				break;
@@ -115,8 +149,10 @@ aircraft::aircraft(int id)
 				//std::cout << "jump:" << std::endl;
 				for (int i = 0; i < 7; i++)
 				{
-					//std::cout << line;
-					getline(Fighters, line);
+					if (!getline(Fighters, line))
+					{
+						throw std::runtime_error("Fighters.txt 数据不完整");
+					}
 				}
 				continue;
 			}
@@ -124,9 +160,9 @@ aircraft::aircraft(int id)
 
 
 	}
-	catch (std::string err)
+	catch (const std::exception& err)
 	{
-		std::cerr << "错误：未能读取文件！（请检查文件完整性）" << std::endl;
+		std::cerr << "错误：未能读取战斗机数据（" << err.what() << "）。" << std::endl;
 		Sleep(3000);
 		exit(EXIT_FAILURE);
 	}
@@ -165,19 +201,6 @@ void aircraft::statUpdate(int Alt, int Spd)
 	return;
 }
 
-void aircraft::operator=(aircraft x)
-{
-	this->name = x.name;
-	this->energyTransRate = x.energyTransRate;
-	this->firePower = x.firePower;
-	this->SpdMx = x.SpdMx;
-	this->SpdUs = x.SpdUs;
-	this->turnRate = x.turnRate;
-	this->WEP = x.WEP;
-	return;
-}
-
-
 void clearScreen()
 {
 	std::cout << "\033[2J\033[H";
@@ -191,6 +214,39 @@ int randInt(int min, int max)
 	return dist(gen);
 }
 
+std::string readToken()
+{
+	std::string value;
+	if (!(std::cin >> value))
+	{
+		throw std::runtime_error("标准输入已关闭或不可用");
+	}
+	return value;
+}
+
+std::filesystem::path dataFilePath(const std::filesystem::path& fileName)
+{
+	const auto workingDirectoryFile = std::filesystem::current_path() / fileName;
+	if (std::filesystem::exists(workingDirectoryFile))
+	{
+		return workingDirectoryFile;
+	}
+
+	wchar_t executablePath[MAX_PATH];
+	const DWORD pathLength = GetModuleFileNameW(nullptr, executablePath, MAX_PATH);
+	if (pathLength != 0 && pathLength < MAX_PATH)
+	{
+		const auto executableDirectoryFile =
+			std::filesystem::path(executablePath).parent_path() / fileName;
+		if (std::filesystem::exists(executableDirectoryFile))
+		{
+			return executableDirectoryFile;
+		}
+	}
+
+	throw std::runtime_error("找不到数据文件：" + fileName.string());
+}
+
 //没有任何初始化的卡牌对象
 card::card()
 	:id(0), name("null"), description("description"), SpdGet(0), AltGet(0), AngleTrans(0), distanceGet(0), type("lev")
@@ -200,21 +256,6 @@ card::card()
 card::card(int id, std::string name, std::string description, int SpdGet, int AltGet, double AngleTrans, int distanceGet, std::string type)
 	:id(id),name(name),description(description),SpdGet(SpdGet),AltGet(AltGet),AngleTrans(AngleTrans),distanceGet(distanceGet),type(type)
 {}
-
-
-void card::operator=(card& inp)
-{
-	this->id = inp.id;
-	this->name = inp.name;
-	this->description = inp.description;
-	this->SpdGet = inp.SpdGet;
-	this->AltGet = inp.AltGet;
-	this->AngleTrans = inp.AngleTrans;
-	this->distanceGet = inp.distanceGet;
-	this->type = inp.type;
-	return;
-}
-
 
 
 void card::showInfo(aircraft& player)
