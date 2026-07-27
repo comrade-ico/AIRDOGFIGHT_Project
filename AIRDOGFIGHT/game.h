@@ -7,7 +7,7 @@ public:
 	game();
 	void ModeSelection();
 	void fighterSelection();
-	bool attack(int fighter, bool headon);
+	bool attack(int fighter);
 	void showStats();
 	void genKardQueue(int fighter, int (& outQueue)[4]);
 	void useCard(int choise, int(&outQueue)[4],int fighter);

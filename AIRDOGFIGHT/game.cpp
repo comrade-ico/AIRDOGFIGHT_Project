@@ -1,4 +1,5 @@
 #include "game.h"
+#include <algorithm>
 #include <stdexcept>
 
 void start()
@@ -106,7 +107,7 @@ void start()
 				choice0 = readToken();
 				if (choice0 == "Y" || choice0 == "y")
 				{
-					if (mainGame.attack((mainGame.angle > 9) ? 0 : 1, false))
+					if (mainGame.attack((mainGame.angle > 9) ? 0 : 1))
 					{
 						std::cout << "击落敌机！" << std::endl;
 						Sleep(500);
@@ -289,10 +290,15 @@ void game::fighterSelection()
 }
 
 
-bool game::attack(int fighter, bool headon = false)
+bool game::attack(int fighter)
 {
 	int dice = randInt(1, 6);
-	int attackDistance = static_cast<int>(effectiveDistance());
+	constexpr int minAttackDistance = 0;
+	constexpr int maxAttackDistance = 7;
+	const int attackDistance = std::clamp(
+		static_cast<int>(std::floor(effectiveDistance())),
+		minAttackDistance,
+		maxAttackDistance);
 	angle += static_cast<int>(std::floor((9 - angle) * 0.5));
 	distance -= 1;
 	switch (relativeAngleRatio())
